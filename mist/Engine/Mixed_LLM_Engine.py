@@ -1,15 +1,15 @@
-from .GenA_Engine import GenAEngine, EngineMetrics, EngineType
-from GenA.Scheduler.scheduler import Scheduler, SchedulerConfig, BatchingMethod
+from .MIST_Engine import MISTEngine, EngineMetrics, EngineType
+from mist.Scheduler.scheduler import Scheduler, SchedulerConfig, BatchingMethod
 from typing import TYPE_CHECKING, ClassVar, Dict, Iterable, List, Optional
-from GenA.Platforms.platforms import PlatformConfig, PlatformType
-from GenA.Request import Request, DataMetrics, RequestMetrics, RequestStage
+from mist.Platforms.platforms import PlatformConfig, PlatformType
+from mist.Request import Request, DataMetrics, RequestMetrics, RequestStage
 import logging
-logger = logging.getLogger('GenA')
+logger = logging.getLogger('mist')
 import heapq
 import time
-from GenA.Coordinator.global_router import LoadTypes
+from mist.Coordinator.global_router import LoadTypes
 
-class LLMEngine(GenAEngine):
+class LLMEngine(MISTEngine):
 
     def __init__(
         self,

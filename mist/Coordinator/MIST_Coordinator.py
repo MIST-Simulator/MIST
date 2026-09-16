@@ -1,9 +1,9 @@
-from GenA.Tracing import ChromeTracingLogger
-from GenA.Engine import GenAEngine,EngineType, stage_to_engine_mapping,EngineMetrics
-from GenA.Platforms.platforms import PlatformConfig, PlatformType
-from GenA.Scheduler.scheduler import Scheduler, SchedulerConfig, BatchingMethod
-from GenA.Request import Request, DataMetrics, RequestMetrics, RequestStatus, RequestStage
-from GenA.Input_requests.Request_inputs import RequestDistributions, UniformDistribution, PoissonDistribution, NormalDistribution
+from mist.Tracing import ChromeTracingLogger
+from mist.Engine import MISTEngine,EngineType, stage_to_engine_mapping,EngineMetrics
+from mist.Platforms.platforms import PlatformConfig, PlatformType
+from mist.Scheduler.scheduler import Scheduler, SchedulerConfig, BatchingMethod
+from mist.Request import Request, DataMetrics, RequestMetrics, RequestStatus, RequestStage
+from mist.Input_requests.Request_inputs import RequestDistributions, UniformDistribution, PoissonDistribution, NormalDistribution
 from typing import TYPE_CHECKING, ClassVar, Dict, Iterable, List, Optional
 import heapq
 from uuid import uuid4
@@ -11,7 +11,7 @@ import pandas as pd
 import numpy as np
 import enum
 
-from GenA.Coordinator.global_router import CoordRouterType, LoadTypes, req_is_heavy
+from mist.Coordinator.global_router import CoordRouterType, LoadTypes, req_is_heavy
 
 
 class EventType(enum.Enum):
@@ -22,7 +22,7 @@ class EventType(enum.Enum):
     def __lt__(self, other):
         return self.value < other.value
 
-class GenACoordinator:
+class MISTCoordinator:
     def __init__(
             self,
             starting_request_queue: List[Request] = [],
@@ -36,7 +36,7 @@ class GenACoordinator:
 
         ## Engine related parameters
         self.num_total_engines = 0
-        self.GenA_engines= []
+        self.engines= []
         self.engine_matcher = dict()
         self.engine_active = []
         self.engine_next_step = dict()
@@ -58,13 +58,13 @@ class GenACoordinator:
         ## Logger
         self.logger = ChromeTracingLogger(logging_file)
 
-    def add_engine(self, engine:GenAEngine, engine_types:List[EngineType]):
+    def add_engine(self, engine:MISTEngine, engine_types:List[EngineType]):
         """
-            This function is designed to add an engine to the GenA system
+            This function is designed to add an engine to the MIST system
         """
         engine_id = self.num_total_engines
         engine.engine_id = engine_id
-        self.GenA_engines.append(engine)
+        self.engines.append(engine)
         engine.logger = self.logger
         for engine_type in engine_types:
             if engine_type not in self.engine_matcher:
@@ -77,7 +77,7 @@ class GenACoordinator:
 
     def add_request(self, request:Request, time:float):
         """
-            This function is designed to add a request to the GenA system
+            This function is designed to add a request to the MIST system
         """
         request.request_id = self.request_accepted
         self.request_accepted += 1
@@ -104,7 +104,7 @@ class GenACoordinator:
 
     def run_sim(self):
         """
-            This function is designed to simulate the running of the GenA system
+            This function is designed to simulate the running of the MIST system
         """
         ## Initialize the DF for engine connection
         # self.initial_engine_connection_df("network_bw.csv")
@@ -138,14 +138,14 @@ class GenACoordinator:
                     ## First engine should be determined only once the req has arrived
                     next_engine_id = self._get_current_engine(cur_req)
 
-                request_added_engine_time = self.GenA_engines[next_engine_id].current_time
+                request_added_engine_time = self.engines[next_engine_id].current_time
                 if request_added_engine_time < event_push_time:
                     ##
                     request_added_engine_time = event_push_time
                 # push the run engine event into the queue
                 req_push_event = (request_added_engine_time, next_engine_id)
                 ## If the engine is active but will be active later, update the sim queue
-                if (self.engine_next_step[next_engine_id] > request_added_engine_time) or self.GenA_engines[next_engine_id].engine_idle():
+                if (self.engine_next_step[next_engine_id] > request_added_engine_time) or self.engines[next_engine_id].engine_idle():
                     self.engine_next_step[next_engine_id] = request_added_engine_time
                     # if next_engine_id == 1:
                     #     print(f"Request added to request queue {next_engine_id} at {request_added_engine_time}")
@@ -154,19 +154,19 @@ class GenACoordinator:
 
                 # TODO: Here it uses the event push time but it might have delay between arrival time
                 # and the actual added request time
-                self.GenA_engines[next_engine_id].add_request(cur_req, event_push_time)
+                self.engines[next_engine_id].add_request(cur_req, event_push_time)
 
             elif (event_type == EventType.ENGINE_RUN_STEP):
                 (cur_time,engine_id) = event_items
                 if event_items in queued_engine_events:
                     queued_engine_events.remove(event_items)
                 self.global_time = cur_time
-                # print(f"Engine {engine_id} is idle =  {self.GenA_engines[engine_id].engine_idle()}")
-                # if self.GenA_engines[engine_id].engine_idle() == False:
-                if self.GenA_engines[engine_id].engine_idle() == False:
+                # print(f"Engine {engine_id} is idle =  {self.engines[engine_id].engine_idle()}")
+                # if self.engines[engine_id].engine_idle() == False:
+                if self.engines[engine_id].engine_idle() == False:
                     # if engine_id == 1:
                     #     print(f"Normal Engine {engine_id} step to start at {cur_time}")
-                    engine_step_end_time, req_list = self.GenA_engines[engine_id].step(cur_time)
+                    engine_step_end_time, req_list = self.engines[engine_id].step(cur_time)
                     self.global_time = cur_time
                 else:
                     continue
@@ -176,7 +176,7 @@ class GenACoordinator:
                     print(f"Global Time {self.global_time}")
                     next_print_time = (self.global_time // 1000 + 1) * 1000
                 eng_push_event = (engine_step_end_time, engine_id)
-                if self.GenA_engines[engine_id].engine_idle() == False:
+                if self.engines[engine_id].engine_idle() == False:
                     # if engine_id == 1:
                     #     print(f"Normal Engine {engine_id} step end at {engine_step_end_time}")
                     heapq.heappush(self.event_queue, (engine_step_end_time, EventType.ENGINE_RUN_STEP, eng_push_event))
@@ -218,7 +218,7 @@ class GenACoordinator:
         TTFT_latencies = []          # Keeps track of all the TTFT latencies
 
         request_gen_times = []
-        for engine in self.GenA_engines:
+        for engine in self.engines:
             if EngineType.PREFILL in engine.engine_types or EngineType.DECODE in engine.engine_types:
                 total_input += sum([req.input_len - req.past_context - req.remaining_prefill_tokens  for req in engine.scheduler.running])
                 actual_output_lens += sum([req.gen_tokens for req in engine.scheduler.running])
@@ -305,7 +305,7 @@ class GenACoordinator:
         min_tokens = np.inf
         engine_id = -1
         for engine in self.engine_matcher[engine_type]:
-            engine_load = self.GenA_engines[engine].get_load(self.global_time, load_type)
+            engine_load = self.engines[engine].get_load(self.global_time, load_type)
             if  engine_load < min_tokens:
                 min_tokens = engine_load
                 engine_id = engine
@@ -397,7 +397,7 @@ class GenACoordinator:
     # TODO: Use this as a movement between engine
     def _get_move_request_time(self, request, src_engine, dst_engine) -> float:
         # Get the cost of moving the request from src to dst engine
-        data_size = request.get_data_movement_size(self.GenA_engines[dst_engine].model)/2**20   # Convert to MB
+        data_size = request.get_data_movement_size(self.engines[dst_engine].model)/2**20   # Convert to MB
         if src_engine == dst_engine:
             # Update the KV Cache Transfer Time
             if request.current_stage == RequestStage.PREFILL:
@@ -437,7 +437,7 @@ class GenACoordinator:
 
     def _add_request_to_engine(self, request, engine_id):
         # The arrival time is based on priority time
-        self.GenA_engines[engine_id].add_request(request, request.priority_time)
+        self.engines[engine_id].add_request(request, request.priority_time)
         None
 
 

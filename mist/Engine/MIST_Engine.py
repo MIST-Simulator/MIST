@@ -1,15 +1,15 @@
 from typing import TYPE_CHECKING, ClassVar, Dict, Iterable, List, Optional
-from GenA.Scheduler.scheduler import Scheduler, SchedulerConfig, BatchingMethod
-from GenA.Request import Request, DataMetrics, RequestMetrics, RequestStage
+from mist.Scheduler.scheduler import Scheduler, SchedulerConfig, BatchingMethod
+from mist.Request import Request, DataMetrics, RequestMetrics, RequestStage
 import random
 import heapq
 import time
 import enum
 
-from GenA.Input_requests.Request_inputs import RequestDistributions, UniformDistribution, PoissonDistribution, NormalDistribution
+from mist.Input_requests.Request_inputs import RequestDistributions, UniformDistribution, PoissonDistribution, NormalDistribution
 
 from dataclasses import dataclass, field
-from GenA.Platforms.platforms import PlatformConfig, PlatformType
+from mist.Platforms.platforms import PlatformConfig, PlatformType
 
 
 class EngineType(enum.Enum):
@@ -99,7 +99,7 @@ class EngineMetrics:
 
 
 
-class GenAEngine:
+class MISTEngine:
 
     def __init__(
         self,

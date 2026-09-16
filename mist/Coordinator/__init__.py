@@ -1,14 +1,14 @@
 
-from .GenA_Coordinator import (
-    GenACoordinator
+from .MIST_Coordinator import (
+    MISTCoordinator
 )
 
 from .Splitwise_Coordinator import(
-    GenACoordinatorDisagg
+    MISTCoordinatorDisagg
 )
 
 from .Distserve_Coordinator import(
-    GenACoordinatorDisagg_DistServe
+    MISTCoordinatorDisagg_DistServe
 )
 
 from .global_router import (

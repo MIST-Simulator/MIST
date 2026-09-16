@@ -1,7 +1,7 @@
 from collections import deque
 from typing import Deque
 
-from GenA.Request.request import Request
+from mist.Request.request import Request
 
 class Policy:
 

@@ -2,7 +2,7 @@ import random
 import numpy as np
 from scipy.stats import poisson, norm
 from typing import TYPE_CHECKING, ClassVar, Dict, Iterable, List, Optional
-from GenA.Request.request import Request, RequestStage
+from mist.Request.request import Request, RequestStage
 from dataclasses import dataclass, field
 import pandas as pd
 from pandas import read_csv

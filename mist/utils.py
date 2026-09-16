@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 from typing import List
-from GenA.Request.request import Request
+from mist.Request.request import Request
 import plotly.graph_objects as go
 from typing import List
 

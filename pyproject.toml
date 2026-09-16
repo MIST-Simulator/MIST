@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mist"
+version = "0.1.0"
+authors = [
+    { name = "Abhimanyu Bambhaniya", email = "abambhaniya3@gatech.edu" },
+]
+description = "MIST: a co-design simulator for heterogeneous, multi-stage LLM inference."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "genz_llm",
+    "numpy",
+    "pandas",
+    "scipy",
+    "scikit-learn",
+    "matplotlib",
+]
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+[project.urls]
+Homepage = "https://github.com/MIST-Simulator/MIST"
+Issues = "https://github.com/MIST-Simulator/MIST/issues"
+
+[tool.setuptools.packages.find]
+include = ["mist*"]
+
+[tool.setuptools.package-data]
+mist = ["Platforms/data/*.csv", "Platforms/vllm_runtime_data/*.csv", "Input_requests/Example Traces/*.csv", "Input_requests/Example_Traces/*.csv"]

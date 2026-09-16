@@ -1,7 +1,7 @@
 from logging import raiseExceptions
 import enum
 from typing import TYPE_CHECKING, ClassVar, Dict, Iterable, List, Optional
-from GenA.Request import Request, DataMetrics, RequestMetrics
+from mist.Request import Request, DataMetrics, RequestMetrics
 import os
 import csv
 import itertools

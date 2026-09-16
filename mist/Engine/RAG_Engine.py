@@ -1,10 +1,10 @@
-from .GenA_Engine import GenAEngine, EngineMetrics, EngineType
-from GenA.Scheduler.scheduler import Scheduler, SchedulerConfig, BatchingMethod
+from .MIST_Engine import MISTEngine, EngineMetrics, EngineType
+from mist.Scheduler.scheduler import Scheduler, SchedulerConfig, BatchingMethod
 from typing import TYPE_CHECKING, ClassVar, Dict, Iterable, List, Optional
-from GenA.Platforms.platforms import PlatformConfig, PlatformType
+from mist.Platforms.platforms import PlatformConfig, PlatformType
 from GenZ import get_configs
 import logging
-logger = logging.getLogger('GenA')
+logger = logging.getLogger('mist')
 import heapq
 import time
 import math
@@ -169,7 +169,7 @@ class Retrieval_Algorithm:
             return (total_compute_time + total_memory_time) * 1000  # Convert to ms
 
 
-class RAGEngine(GenAEngine):
+class RAGEngine(MISTEngine):
 
     def __init__(
         self,

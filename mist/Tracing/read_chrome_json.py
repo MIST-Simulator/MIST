@@ -1,6 +1,6 @@
 import json
 from typing import List
-from GenA.Request.request import Request
+from mist.Request.request import Request
 
 def read_trace_files(trace_files) -> List[List[Request]]:
     """Reads trace files and returns the trace data."""

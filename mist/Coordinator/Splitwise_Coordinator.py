@@ -1,12 +1,12 @@
 
-from .GenA_Coordinator import GenACoordinator, CoordRouterType
-from GenA.Engine import EngineType, GenAEngine, LLMEngine
-from GenA.Scheduler import SchedulerConfig, BatchingMethod
-from GenA.Input_requests import UniformDistribution, TraceDistributions, PoissonDistribution, LengthVariables
-from GenA.Platforms import PlatformConfig
-from GenA.Request import Request,RequestStage
+from .MIST_Coordinator import MISTCoordinator, CoordRouterType
+from mist.Engine import EngineType, MISTEngine, LLMEngine
+from mist.Scheduler import SchedulerConfig, BatchingMethod
+from mist.Input_requests import UniformDistribution, TraceDistributions, PoissonDistribution, LengthVariables
+from mist.Platforms import PlatformConfig
+from mist.Request import Request,RequestStage
 from typing import List, Optional
-from GenA.Global_Network import get_network_bw_between_engines, get_network_spec
+from mist.Global_Network import get_network_bw_between_engines, get_network_spec
 import pandas as pd
 from collections import deque
 import numpy as np
@@ -25,7 +25,7 @@ def engine_to_stage_mapping(type: EngineType):
     else:
         raise ValueError(f"No stage  found for the engine:{type}")
 
-class GenACoordinatorDisagg(GenACoordinator):
+class MISTCoordinatorDisagg(MISTCoordinator):
 
     def __init__(
         self,
@@ -141,7 +141,7 @@ class GenACoordinatorDisagg(GenACoordinator):
             self.add_engine(mixed_engine_to_add, [EngineType.MIXED])
 
         # # Add An Engine for the HOST (Determine characteristics of host later)
-        # self.add_engine(GenAEngine(
+        # self.add_engine(MISTEngine(
         #     model = self.model,
         #     sim_duration = 10000000,
         #     engine_types = [EngineType.HOST],
@@ -156,7 +156,7 @@ class GenACoordinatorDisagg(GenACoordinator):
 
     def _check_the_engine_load(self, engine_id):
         assert engine_id < self.num_llm_engines, f"Invalid Engine id"
-        engine_load_num = len(self.GenA_engines[engine_id].request_queue)
+        engine_load_num = len(self.engines[engine_id].request_queue)
 
     def _reassign_engine_type(self, engine_id, old_type:EngineType, new_type:EngineType):
         """
@@ -169,12 +169,12 @@ class GenACoordinatorDisagg(GenACoordinator):
         # print(f"reassigning engine: {engine_id} from {old_type} to {new_type}")
         if old_type == EngineType.MIXED:
             # Move back to the original engine requires remove the capability of running the opposite types
-            self.GenA_engines[engine_id].engine_types.remove(self._get_opposite_engine_type(new_type))
-            self.GenA_engines[engine_id].scheduler_config = SchedulerConfig(batching_method=BatchingMethod.DISAGGREGATED)
+            self.engines[engine_id].engine_types.remove(self._get_opposite_engine_type(new_type))
+            self.engines[engine_id].scheduler_config = SchedulerConfig(batching_method=BatchingMethod.DISAGGREGATED)
         else:
         # Capable to run both prefill and decode now
-            self.GenA_engines[engine_id].engine_types.append(self._get_opposite_engine_type(old_type))
-            self.GenA_engines[engine_id].scheduler_config = SchedulerConfig(batching_method=BatchingMethod.MIXED)
+            self.engines[engine_id].engine_types.append(self._get_opposite_engine_type(old_type))
+            self.engines[engine_id].scheduler_config = SchedulerConfig(batching_method=BatchingMethod.MIXED)
 
     def _get_least_loaded_engines(self, engine_types:List[EngineType], request:Request):
         """
@@ -187,7 +187,7 @@ class GenACoordinatorDisagg(GenACoordinator):
             num_engines = len(self.engine_matcher[eng_type])
             for type_id in range(num_engines):
                 engine_id = self.engine_matcher[eng_type][type_id]
-                engine_loads[(engine_id, eng_type)] = self.GenA_engines[engine_id].tokens_load(request.metrics.arrival_time)
+                engine_loads[(engine_id, eng_type)] = self.engines[engine_id].tokens_load(request.metrics.arrival_time)
 
         ## If all the engines have the same load, just return in RR manner for the original type (prefill or decode)
         if len(set(engine_loads.values())) == 1:
@@ -209,7 +209,7 @@ class GenACoordinatorDisagg(GenACoordinator):
             num_engines = len(self.engine_matcher[eng_type])
             for type_id in range(num_engines):
                 engine_id = self.engine_matcher[eng_type][type_id]
-                engine_loads[(engine_id,eng_type)] = self.GenA_engines[engine_id].tokens_load(request.metrics.arrival_time) + request.input_len
+                engine_loads[(engine_id,eng_type)] = self.engines[engine_id].tokens_load(request.metrics.arrival_time) + request.input_len
 
         ## If all the engines have the same load, just return in RR manner for the original type (prefill or decode)
         if len(set(engine_loads.values())) == 1 and len(engine_loads) > 0:
@@ -228,7 +228,7 @@ class GenACoordinatorDisagg(GenACoordinator):
         engine_loads = {}
         for type_id in range(num_engines):
             engine_id = self.engine_matcher[engine_type][type_id]
-            engine_loads[engine_id] = self.GenA_engines[engine_id].tokens_load(request.metrics.arrival_time)
+            engine_loads[engine_id] = self.engines[engine_id].tokens_load(request.metrics.arrival_time)
         # print("Engine Loads: ", engine_loads)
         ## If all the engines have the same load, just return in RR manner
         if len(set(engine_loads.values())) == 1 or sum(1 for load in engine_loads.values() if load == 0) > 0:
@@ -249,7 +249,7 @@ class GenACoordinatorDisagg(GenACoordinator):
         engine_loads = {}
         for type_id in range(num_engines):
             engine_id = self.engine_matcher[engine_type][type_id]
-            engine_loads[engine_id] = self.GenA_engines[engine_id].tokens_load(self.global_time) + request.input_len
+            engine_loads[engine_id] = self.engines[engine_id].tokens_load(self.global_time) + request.input_len
 
         ## If all the engines have the same load, just return in RR manner
         if len(set(engine_loads.values())) == 1:
@@ -271,13 +271,13 @@ class GenACoordinatorDisagg(GenACoordinator):
         engine_to_select = self._get_least_loaded_engine(EngineType.MIXED, request)
         # print(f"number of mixed engine {len(self.engine_matcher[EngineType.MIXED])}")
 
-        if engine_to_select == -1 or self.GenA_engines[engine_to_select].check_is_overload(request.metrics.arrival_time):
+        if engine_to_select == -1 or self.engines[engine_to_select].check_is_overload(request.metrics.arrival_time):
             if self.convert_to_mixed_engine:
                 # If mixed engines are overloaded
                 type_to_find = self._get_opposite_engine_type(init_engine_type)
                 engine_to_select = self._get_least_loaded_engine(type_to_find, request)
                 # print(f"No Mixed found, converting {type_to_find} to mixed engine. Engine to select: {engine_to_select}")
-                if len(self.engine_matcher[type_to_find]) < 1 or self.GenA_engines[engine_to_select].check_is_overload(request.metrics.arrival_time):
+                if len(self.engine_matcher[type_to_find]) < 1 or self.engines[engine_to_select].check_is_overload(request.metrics.arrival_time):
                     # All the engines are overloaded, just don't move, find the
                     # least loaded engine in the original pool
                     engine_to_select = self._get_least_loaded_engine(init_engine_type, request)
@@ -299,13 +299,13 @@ class GenACoordinatorDisagg(GenACoordinator):
         engine_to_select = self._get_least_loaded_engine_prefill(EngineType.MIXED, request)
         # print(f"number of mixed engine {len(self.engine_matcher[EngineType.MIXED])}")
 
-        if engine_to_select == -1 or self.GenA_engines[engine_to_select].check_is_overload_with_prefill(request.metrics.arrival_time, request):
+        if engine_to_select == -1 or self.engines[engine_to_select].check_is_overload_with_prefill(request.metrics.arrival_time, request):
             if self.convert_to_mixed_engine:
                 # If mixed engines are overloaded
                 type_to_find = self._get_opposite_engine_type(init_engine_type)
                 engine_to_select = self._get_least_loaded_engine_prefill(type_to_find, request)
                 # print(f"No Mixed found, converting {type_to_find} to mixed engine. Engine to select: {engine_to_select}")
-                if len(self.engine_matcher[type_to_find]) < 1 or self.GenA_engines[engine_to_select].check_is_overload_with_prefill(request.metrics.arrival_time, request):
+                if len(self.engine_matcher[type_to_find]) < 1 or self.engines[engine_to_select].check_is_overload_with_prefill(request.metrics.arrival_time, request):
                     # All the engines are overloaded, just don't move, find the
                     # least loaded engine in the original pool
                     engine_to_select = self._get_least_loaded_engines_prefill([init_engine_type, EngineType.MIXED], request)
@@ -330,7 +330,7 @@ class GenACoordinatorDisagg(GenACoordinator):
         elif self.cluster_schedule == CoordRouterType.JOIN_SHORTEST_QUEUE:
             engine_to_select = self._get_least_loaded_engine(EngineType.PREFILL, request)
             # print(f'Req:{request.request_id} engine to select:', engine_to_select)
-            if engine_to_select != -1 and self.GenA_engines[engine_to_select].check_is_overload_with_prefill(request.metrics.arrival_time, request):
+            if engine_to_select != -1 and self.engines[engine_to_select].check_is_overload_with_prefill(request.metrics.arrival_time, request):
                 # If the engine is overloaded, we need to use engines in the mixed pool
                 engine_to_select = self._get_mixed_engine_overloaded_prefill(EngineType.PREFILL,request)
 
@@ -355,8 +355,8 @@ class GenACoordinatorDisagg(GenACoordinator):
             return super()._determine_dst_engine(EngineType.PREFILL)
         elif self.cluster_schedule == CoordRouterType.JOIN_SHORTEST_QUEUE:
             engine_to_select = self._get_least_loaded_engine(EngineType.DECODE, request)
-            # print(f"engine id: {self.GenA_engines[engine_to_select].engine_id}, type: {self.GenA_engines[engine_to_select].engine_types}")
-            if engine_to_select != -1 and self.GenA_engines[engine_to_select].check_is_overload(request.metrics.arrival_time):
+            # print(f"engine id: {self.engines[engine_to_select].engine_id}, type: {self.engines[engine_to_select].engine_types}")
+            if engine_to_select != -1 and self.engines[engine_to_select].check_is_overload(request.metrics.arrival_time):
                 # If the engine is overloaded, we need to use engines in the mixed pool
                 engine_to_select = self._get_mixed_engine_overloaded(EngineType.DECODE, request)
 
@@ -407,7 +407,7 @@ class GenACoordinatorDisagg(GenACoordinator):
             pop_count -= 1
             eng_type = self._get_opposite_engine_type(orig_type)
             req_stage = engine_to_stage_mapping(eng_type)
-            if not self.GenA_engines[engine_id].check_req_stage_existence(req_stage):
+            if not self.engines[engine_id].check_req_stage_existence(req_stage):
                 self._reassign_engine_type(engine_id, cur_type, orig_type)
             else:
                 self.engine_movement_tracker.append((orig_type, cur_type, engine_id))

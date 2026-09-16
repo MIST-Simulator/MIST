@@ -12,7 +12,7 @@ import pandas as pd
 
 from scipy.interpolate import interp1d
 
-from GenA.Platforms import PlatformType
+from mist.Platforms import PlatformType
 
 
 performance_model = None

@@ -1,17 +1,17 @@
-from .GenA_Engine import GenAEngine, EngineMetrics, EngineType
-from GenA.Scheduler.scheduler import Scheduler, SchedulerConfig, BatchingMethod
+from .MIST_Engine import MISTEngine, EngineMetrics, EngineType
+from mist.Scheduler.scheduler import Scheduler, SchedulerConfig, BatchingMethod
 from typing import TYPE_CHECKING, ClassVar, Dict, Iterable, List, Optional
-from GenA.Platforms import MemoryCacheConfig
-from GenA.Request import Request, DataMetrics, RequestMetrics, RequestStage
+from mist.Platforms import MemoryCacheConfig
+from mist.Request import Request, DataMetrics, RequestMetrics, RequestStage
 import logging
-logger = logging.getLogger('GenA')
+logger = logging.getLogger('mist')
 import heapq
 import time
 import math
 import time
 import random
 
-class KVRetrievalEngine(GenAEngine):
+class KVRetrievalEngine(MISTEngine):
 
     def __init__(
         self,

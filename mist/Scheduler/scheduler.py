@@ -5,8 +5,8 @@ from typing import (TYPE_CHECKING, Any, ClassVar, Dict, List, Optional, Tuple,
 from collections import deque
 from dataclasses import dataclass, field
 
-from GenA.Scheduler.policy import Policy, PolicyFactory
-from GenA.Request import RequestStatus, RequestStage, RequestMetrics, Request, DataMetrics
+from mist.Scheduler.policy import Policy, PolicyFactory
+from mist.Request import RequestStatus, RequestStage, RequestMetrics, Request, DataMetrics
 import time
 import warnings
 

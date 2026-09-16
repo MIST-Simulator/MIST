@@ -1,5 +1,5 @@
 from .Request_inputs import RequestDistributions
-from GenA.Request.request import Request
+from mist.Request.request import Request
 import pandas as pd
 from pandas import read_csv
 
@@ -52,9 +52,9 @@ class TraceIngestion(RequestDistributions):
         self.ingestion_trace_file = ingestion_trace_file
         self.request_queue = []
         super().__init__(**kwargs) # Call the parent class constructor
-        self.convert_to_GenA_format(**kwargs)
+        self.convert_to_MIST_format(**kwargs)
 
-    def convert_to_GenA_format(self):
+    def convert_to_MIST_format(self):
         trace_df = read_csv(self.ingestion_trace_file)
         num_requests = len(trace_df)
         for idx, row in trace_df.iterrows():

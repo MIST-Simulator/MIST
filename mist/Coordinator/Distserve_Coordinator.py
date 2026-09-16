@@ -1,12 +1,12 @@
 
-from .GenA_Coordinator import GenACoordinator, CoordRouterType
-from GenA.Engine import EngineType, GenAEngine, LLMEngine
-from GenA.Scheduler import SchedulerConfig, BatchingMethod
-from GenA.Input_requests import UniformDistribution, TraceDistributions, PoissonDistribution, LengthVariables
-from GenA.Platforms import PlatformConfig
-from GenA.Request import Request,RequestStage
+from .MIST_Coordinator import MISTCoordinator, CoordRouterType
+from mist.Engine import EngineType, MISTEngine, LLMEngine
+from mist.Scheduler import SchedulerConfig, BatchingMethod
+from mist.Input_requests import UniformDistribution, TraceDistributions, PoissonDistribution, LengthVariables
+from mist.Platforms import PlatformConfig
+from mist.Request import Request,RequestStage
 from typing import List
-from GenA.Global_Network import get_network_bw_between_engines, get_network_spec
+from mist.Global_Network import get_network_bw_between_engines, get_network_spec
 import pandas as pd
 from collections import deque
 import math
@@ -25,7 +25,7 @@ def engine_to_stage_mapping(type: EngineType):
     else:
         raise ValueError(f"No stage  found for the engine:{type}")
 
-class GenACoordinatorDisagg_DistServe(GenACoordinator):
+class MISTCoordinatorDisagg_DistServe(MISTCoordinator):
 
     def __init__(
         self,
@@ -97,7 +97,7 @@ class GenACoordinatorDisagg_DistServe(GenACoordinator):
             self.add_engine(decode_engine_to_add, [EngineType.DECODE])
 
         # # Add An Engine for the HOST (Determine characteristics of host later)
-        # self.add_engine(GenAEngine(
+        # self.add_engine(MISTEngine(
         #     model = self.model,
         #     sim_duration = 10000000,
         #     engine_types = [EngineType.HOST],
@@ -111,7 +111,7 @@ class GenACoordinatorDisagg_DistServe(GenACoordinator):
 
     def _check_the_engine_load(self, engine_id):
         assert engine_id < self.num_llm_engines, f"Invalid Engine id"
-        engine_load_num = len(self.GenA_engines[engine_id].request_queue)
+        engine_load_num = len(self.engines[engine_id].request_queue)
 
     def _get_least_loaded_engine(self, engine_list:List, request:Request):
         engine_to_select = -1
@@ -119,10 +119,10 @@ class GenACoordinatorDisagg_DistServe(GenACoordinator):
         engine_loads = {}
         # for type_id in range(num_engines):
         #     engine_id = self.engine_matcher[engine_type][type_id]
-        #     engine_loads[engine_id] = self.GenA_engines[engine_id].tokens_load(self.global_time)
+        #     engine_loads[engine_id] = self.engines[engine_id].tokens_load(self.global_time)
         for engine_id in engine_list:
-            print(f"At time: {request.metrics.arrival_time}, engine: {engine_id} has load: {self.GenA_engines[engine_id].tokens_load(request.metrics.arrival_time)}")
-            engine_loads[engine_id] = self.GenA_engines[engine_id].tokens_load(request.metrics.arrival_time)
+            print(f"At time: {request.metrics.arrival_time}, engine: {engine_id} has load: {self.engines[engine_id].tokens_load(request.metrics.arrival_time)}")
+            engine_loads[engine_id] = self.engines[engine_id].tokens_load(request.metrics.arrival_time)
 
         ## If all the engines have the same load, just return in RR manner
         if len(set(engine_loads.values())) == 1:
@@ -142,7 +142,7 @@ class GenACoordinatorDisagg_DistServe(GenACoordinator):
     #     engine_loads = {}
     #     for type_id in range(num_engines):
     #         engine_id = self.engine_matcher[engine_type][type_id]
-    #         engine_loads[engine_id] = self.GenA_engines[engine_id].tokens_load(self.global_time)
+    #         engine_loads[engine_id] = self.engines[engine_id].tokens_load(self.global_time)
 
     #     ## If all the engines have the same load, just return in RR manner
     #     if len(set(engine_loads.values())) == 1:
@@ -190,7 +190,7 @@ class GenACoordinatorDisagg_DistServe(GenACoordinator):
     # TODO: Splitwise has optimized movement protocal that does per-layer transfer
     def _get_move_request_time(self, request, src_engine, dst_engine) -> float:
         # Get the cost of moving the request from src to dst engine
-        data_size = request.get_data_movement_size(self.GenA_engines[dst_engine].model)/2**20   # Convert to MB
+        data_size = request.get_data_movement_size(self.engines[dst_engine].model)/2**20   # Convert to MB
         if src_engine == dst_engine:
             return 0
         else:

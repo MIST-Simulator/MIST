@@ -2,7 +2,7 @@ import json
 import time
 import os
 
-from GenA.Request.request import RequestStage
+from mist.Request.request import RequestStage
 
 class ChromeTracingLogger:
     def __init__(self, filename="trace.json"):

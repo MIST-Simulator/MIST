@@ -1,10 +1,10 @@
 from .Coordinator import (
-    GenACoordinator,
-    GenACoordinatorDisagg
+    MISTCoordinator,
+    MISTCoordinatorDisagg
 )
 
 from .Engine import (
-    GenAEngine,
+    MISTEngine,
     LLMEngine,
     KVRetrievalEngine,
     EngineMetrics,

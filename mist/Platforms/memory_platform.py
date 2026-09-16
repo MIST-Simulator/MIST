@@ -1,4 +1,4 @@
-from GenA.Request import Request, DataMetrics, RequestMetrics
+from mist.Request import Request, DataMetrics, RequestMetrics
 from typing import TYPE_CHECKING, ClassVar, Dict, Iterable, List, Optional
 from GenZ import ModelConfig, get_configs
 

@@ -7,7 +7,7 @@ import ast
 from sklearn.ensemble import RandomForestRegressor
 import numpy as np
 
-from GenA.Request import Request
+from mist.Request import Request
 from .platforms import PlatformConfig, PlatformType
 
 

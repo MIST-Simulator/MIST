@@ -1,9 +1,9 @@
 #TODO: Refactor everything below to support csv input for prefill and decodes instead of GenZ
 import enum
 from typing import TYPE_CHECKING, ClassVar, Dict, Iterable, List, Optional
-from GenA.Request import Request, DataMetrics, RequestMetrics
-from GenA.Platforms.performance_model import PerformanceModel, SplitwisePerformanceModel
-from GenA.Platforms.platforms import PlatformConfig, PlatformType
+from mist.Request import Request, DataMetrics, RequestMetrics
+from mist.Platforms.performance_model import PerformanceModel, SplitwisePerformanceModel
+from mist.Platforms.platforms import PlatformConfig, PlatformType
 
 import os
 
