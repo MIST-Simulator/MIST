@@ -25,6 +25,11 @@ class RequestDistributions:
                 ) -> None:
         self.request_queue = []
         self.rand_seed = rand_seed
+        # Per-instance generators: no shared global RNG state, so distributions built
+        # concurrently stay reproducible. RandomState/Random (not default_rng) keep the
+        # exact streams older versions drew from the seeded global generators.
+        self.np_rng = np.random.RandomState(rand_seed)
+        self.py_rng = random.Random(rand_seed)
         self.input_vars = input_vars
         self.output_vars = output_vars
         self.trace_file = trace_file
@@ -91,9 +96,9 @@ class RequestDistributions:
             max_input_length = self.input_vars.max_length
 
             if input_length is not None and input_variance is not None:
-                input_length = abs(int(np.random.normal(input_length, input_variance)))
+                input_length = abs(int(self.np_rng.normal(input_length, input_variance)))
             else:
-                return random.randint(100, 1000)
+                return self.py_rng.randint(100, 1000)
 
             return min(input_length, max_input_length) if max_input_length is not None else input_length
 
@@ -108,9 +113,9 @@ class RequestDistributions:
             max_output_length = self.output_vars.max_length
 
             if output_length is not None and output_variance is not None:
-                output_length = abs(int(np.random.normal(output_length, output_variance)))
+                output_length = abs(int(self.np_rng.normal(output_length, output_variance)))
             else:
-                return random.randint(10, 100)
+                return self.py_rng.randint(10, 100)
 
             return min(output_length, max_output_length) if max_output_length is not None else output_length
 
@@ -148,7 +153,7 @@ class UniformDistribution(RequestDistributions):
                             arrival_time = req_init_time, beam_size=beam_size, **self.req_args))
             req_init_time += request_interval
 
-def generate_poisson_distribution(rps, sim_time_ms):
+def generate_poisson_distribution(rps, sim_time_ms, seed=None):
     # Convert sim_time to seconds
     sim_time_s = sim_time_ms / 1000
 
@@ -160,7 +165,7 @@ def generate_poisson_distribution(rps, sim_time_ms):
 
     # Generate random samples
     num_samples = int(expected_events)
-    samples = poisson_dist.rvs(size=num_samples)
+    samples = poisson_dist.rvs(size=num_samples, random_state=seed)
 
     # Scale samples to fit within sim_time_ms
     scaled_samples = samples * (sim_time_ms / samples.max())
@@ -189,9 +194,6 @@ class PoissonDistribution(RequestDistributions):
         Returns:
             None
         """
-        random.seed(self.rand_seed)  # Set a fixed seed
-        np.random.seed(self.rand_seed)
-
         req_init_time = 0
         while req_init_time < sim_time and self.num_requests > self.i:
             input_len = self.get_input_token_size()
@@ -200,7 +202,7 @@ class PoissonDistribution(RequestDistributions):
             self.i += 1
             self.request_queue.append(Request(input_len=input_len, output_len=output_len,
                             arrival_time = req_init_time, beam_size=beam_size, **self.req_args))
-            req_init_time += np.random.exponential(1.0 / rps) * 1000
+            req_init_time += self.np_rng.exponential(1.0 / rps) * 1000
 
 class NormalDistribution(RequestDistributions):
     def __init__(self,
@@ -218,9 +220,6 @@ class NormalDistribution(RequestDistributions):
         Returns:
             None
         """
-        random.seed(self.rand_seed)  # Set a fixed seed
-        np.random.seed(self.rand_seed)
-
         mean_interval = 1000 / rps  # Mean time between requests in milliseconds
         std_dev = mean_interval / 4  # Standard deviation (you can adjust this)
 
@@ -234,7 +233,7 @@ class NormalDistribution(RequestDistributions):
                             arrival_time=req_init_time, beam_size=beam_size, **self.req_args))
 
             # Generate next interval using Normal distribution
-            interval = norm.rvs(loc=mean_interval, scale=std_dev)
+            interval = norm.rvs(loc=mean_interval, scale=std_dev, random_state=self.np_rng)
             interval = max(interval, 0)  # Ensure non-negative interval
 
             req_init_time += interval
@@ -297,7 +296,6 @@ class BurstyDistribution(RequestDistributions):
 
     def generate_distribution(self, rps: float, sim_time: float) -> None:
         """Generate a bursty request pattern with sharp peaks."""
-        random.seed(self.rand_seed)
         time = 0
 
         while time < sim_time and self.num_requests > self.i:

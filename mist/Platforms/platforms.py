@@ -145,11 +145,11 @@ class PlatformConfig:
         self._mixed_batch_cache: Dict[int, Dict[int, tuple]] = {}
         try:
             if os.path.exists(self.decode_cache_path):
-                df = pd.read_csv(self.decode_cache_path)
+                df = pd.read_csv(self.decode_cache_path, float_precision='round_trip')
                 for n_dec, sum_kv, lat, nrg in zip(df['n_dec'], df['sum_kv'], df['latency'], df['energy']):
                     self._decode_only_cache.setdefault(int(n_dec), {})[int(sum_kv)] = (lat, nrg)
             if os.path.exists(self.mixed_cache_path):
-                df = pd.read_csv(self.mixed_cache_path)
+                df = pd.read_csv(self.mixed_cache_path, float_precision='round_trip')
                 for c_size, tot_kv, lat, nrg in zip(df['chunk_size'], df['total_kv'], df['latency'], df['energy']):
                     self._mixed_batch_cache.setdefault(int(c_size), {})[int(tot_kv)] = (lat, nrg)
         except Exception:
