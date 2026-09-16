@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.DS_Store
+Platform_traces_logs/
+*.db
+*.db-wal
+*.db-shm
+*.init.lock
+trace.json
+simulation_trace_*.json
