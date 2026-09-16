@@ -56,7 +56,8 @@ class EngineMetrics:
         T99_latency: 99th percentile of request completion latency
         interactivity: Average interactivity (Tokens/s/user)
         output_throughput: Average output throughput (Tokens/s)
-        total_token_throughput: Average total throughput (Tokens/s)
+        total_token_throughput: Average total throughput (Tokens/s): newly prefilled
+            prompt tokens plus generated tokens. Reused KV (past_context) is excluded.
     """
     TTFT: float = None
     TPOT: float = None

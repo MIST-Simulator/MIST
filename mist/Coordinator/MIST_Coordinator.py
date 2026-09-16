@@ -223,7 +223,7 @@ class MISTCoordinator:
         request_gen_times = []
         for engine in self.engines:
             if EngineType.PREFILL in engine.engine_types or EngineType.DECODE in engine.engine_types:
-                total_input += sum([req.input_len - req.past_context - req.remaining_prefill_tokens  for req in engine.scheduler.running])
+                total_input += sum([req.input_len - req.remaining_prefill_tokens for req in engine.scheduler.running])
                 actual_output_lens += sum([req.gen_tokens for req in engine.scheduler.running])
                 request_gen_times.extend([req.data[j].finished_time - req.data[j].scheduled_time for req in engine.scheduler.running for j in range(len(req.data))] )
                 TTFT_latencies.extend([req.data[0].finished_time - req.metrics.arrival_time for req in engine.scheduler.running if len(req.data) > 0])
@@ -231,7 +231,7 @@ class MISTCoordinator:
         for i, request in enumerate(self.completed_requests):
             TTFT = (request.data[0].finished_time - request.metrics.arrival_time)
             sum_TTFT += TTFT
-            total_input += request.input_len - request.past_context - request.remaining_prefill_tokens
+            total_input += request.input_len - request.remaining_prefill_tokens
             if request.gen_tokens > 1:
                 actual_output_lens += request.gen_tokens
                 for j in range(1, len(request.data)):
