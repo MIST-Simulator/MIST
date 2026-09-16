@@ -30,6 +30,7 @@ class vLLMPlatformConfig(PlatformConfig):
         model: Optional[str] = None,
         engine_type: Optional[PlatformType] = PlatformType.MIXED_MACHINE,
         chunk_size: Optional[int] = 2048,
+        bits: str = 'bf16',
     ) -> None:
 
         def _parse_list(val):
@@ -159,6 +160,7 @@ class vLLMPlatformConfig(PlatformConfig):
             engine_type=engine_type,
             chunk_size=chunk_size,
             model=model,
+            bits=bits,
         )
 
         if self.use_vllm:

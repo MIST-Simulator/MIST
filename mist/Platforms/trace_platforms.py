@@ -27,10 +27,11 @@ class TracePlatformConfig(PlatformConfig):
                 engine_type: Optional[PlatformType] = PlatformType.MIXED_MACHINE,
                 model: Optional[str] = None,
                 # Give the relative path to the csv file
-                data_path: Optional[str] = "data/perf_model.csv"
+                data_path: Optional[str] = "data/perf_model.csv",
+                bits: str = 'bf16',
                 ) -> None:
         super().__init__(device=device, tensor_parallel_size=tensor_parallel_size, 
-                         pipeline_parallel_size=pipeline_parallel_size, engine_type=engine_type, model=model)
+                         pipeline_parallel_size=pipeline_parallel_size, engine_type=engine_type, model=model, bits=bits)
         
         current_dir = os.path.dirname(os.path.abspath(__file__))
         data_path = os.path.join(current_dir, data_path)

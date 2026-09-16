@@ -29,6 +29,7 @@ class PlatformConfig:
         device: Either an existing system config or making a new custom system
         pipeline_parallel_size: Number of pipeline parallel groups.
         tensor_parallel_size: Number of tensor parallel groups.
+        bits: Weight/activation precision passed to GenZ ('bf16', 'fp8', 'int8', ...).
     """
 
     def __init__(self,
@@ -42,8 +43,10 @@ class PlatformConfig:
                 beam_merge: Optional[bool] = False,
                 decode_step_size: int = 256,
                 mixed_kv_step_size: int = 32000,
+                bits: str = 'bf16',
                 ) -> None:
         self.device = device
+        self.bits = bits
         self.system = None
         self.pipeline_parallel_size = pipeline_parallel_size
         self.tensor_parallel_size = tensor_parallel_size
@@ -78,7 +81,7 @@ class PlatformConfig:
             prefill_kv_sizes = [],                 # [(prefill_past_kv, num_prefill)],
             decode_kv_sizes =  [1],            # [decode_past_kv]*num_decodes,
             system_name=self.get_system_config(),
-            bits='fp8',
+            bits=self.bits,
             system_eff=self.sys_eff,
             tensor_parallel=self.tensor_parallel_size,
             pipeline_parallel=self.pipeline_parallel_size,
@@ -101,12 +104,12 @@ class PlatformConfig:
             model_name = self.model.model.lower()
         else:
             raise ValueError("Model should be a string or ModelConfig instance.")
-        record_filename = f"{self.get_log_prefix()}record_{str(model_name).replace('/', '_')}_{self.device}_TP{self.tensor_parallel_size}_PP{self.pipeline_parallel_size}.db"
+        record_filename = f"{self.get_log_prefix()}record_{str(model_name).replace('/', '_')}_{self.device}_TP{self.tensor_parallel_size}_PP{self.pipeline_parallel_size}_{self.bits}.db"
         record_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "Platform_traces_logs"))
         os.makedirs(record_dir, exist_ok=True)
         self.record_path = os.path.join(record_dir, record_filename)
 
-        csv_filename = f"{self.get_log_prefix()}record_{str(model_name).replace('/', '_')}_{self.device}_TP{self.tensor_parallel_size}_PP{self.pipeline_parallel_size}.csv"
+        csv_filename = f"{self.get_log_prefix()}record_{str(model_name).replace('/', '_')}_{self.device}_TP{self.tensor_parallel_size}_PP{self.pipeline_parallel_size}_{self.bits}.csv"
         self.csv_path = os.path.join(record_dir, csv_filename)
         self.decode_cache_path = os.path.join(record_dir, csv_filename.replace('.csv', '_decode_cache.csv'))
         self.mixed_cache_path  = os.path.join(record_dir, csv_filename.replace('.csv', '_mixed_cache.csv'))
@@ -276,7 +279,7 @@ class PlatformConfig:
                     prefill_kv_sizes=[],
                     decode_kv_sizes=decode_kv_caches,
                     system_name=self.get_system_config(),
-                    bits='fp8',
+                    bits=self.bits,
                     system_eff=self.sys_eff,
                     tensor_parallel=self.tensor_parallel_size,
                     pipeline_parallel=self.pipeline_parallel_size
@@ -323,7 +326,7 @@ class PlatformConfig:
                     prefill_kv_sizes=prefill_kv_caches,
                     decode_kv_sizes=decode_kv_caches,
                     system_name=self.get_system_config(),
-                    bits='fp8',
+                    bits=self.bits,
                     system_eff=self.sys_eff,
                     tensor_parallel=self.tensor_parallel_size,
                     pipeline_parallel=self.pipeline_parallel_size
@@ -361,7 +364,7 @@ class PlatformConfig:
         chunked_output = chunked_moddeling(model = self.model,
                                     prefill_kv_sizes = prefill_kv_caches,
                                     decode_kv_sizes = [],
-                                    system_name = self.get_system_config(), bits = 'fp8',
+                                    system_name = self.get_system_config(), bits = self.bits,
                                     system_eff=self.sys_eff,
                                     tensor_parallel = self.tensor_parallel_size,
                                     pipeline_parallel= self.pipeline_parallel_size
@@ -379,7 +382,7 @@ class PlatformConfig:
         if self.device in ["a100_sxm", "cerebras_cs3", "groq_lpx", "l40s", "mi355x",
                             "b200_sxm", "gb200", "h100_sxm", "mi300x", "tpu_v6e",
                             "b60", "gb300", "h200_sxm", "mi350x", "tpu_v7", "etched"]:
-            self.system = System(system_name=self.device, compute_engine = "profiled-ops", bits = 'fp8', collective_strategy="profiled-ops")
+            self.system = System(system_name=self.device, compute_engine = "profiled-ops", bits = self.bits, collective_strategy="profiled-ops")
             return  self.system
         if self.device == "H100_GPU" or self.device == "Real_H100_GPU" or self.device == "H100":
             return {'Flops': 989, 'Memory_size': 80, 'Memory_BW': 3400, 'ICN': 450 , 'real_values':True}
