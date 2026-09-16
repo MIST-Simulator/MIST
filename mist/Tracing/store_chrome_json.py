@@ -3,6 +3,9 @@ import time
 import os
 
 from mist.Request.request import RequestStage
+import logging
+
+logger = logging.getLogger(__name__)
 
 class ChromeTracingLogger:
     def __init__(self, filename="trace.json"):
@@ -67,7 +70,7 @@ class ChromeTracingLogger:
         engine_filename = self.filename.replace(".json", "_engine.json")
         self._save_trace(request_filename, self.request_wise_events)
         self._save_trace(engine_filename, self.engine_wise_events)
-        print(f"Saved trace to {self.filename}. Open in chrome://tracing")
+        logger.info(f"Saved trace to {self.filename}. Open in chrome://tracing")
 
 
 # Example usage

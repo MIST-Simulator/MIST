@@ -10,6 +10,9 @@ from mist.Global_Network import get_network_bw_between_engines, get_network_spec
 import pandas as pd
 from collections import deque
 import math
+import logging
+
+logger = logging.getLogger(__name__)
 
 def engine_to_stage_mapping(type: EngineType):
     if type == EngineType.RAG:
@@ -104,7 +107,7 @@ class MISTCoordinatorDisagg_DistServe(MISTCoordinator):
         #     ), [EngineType.HOST])
 
         # Print out layout and assignment of engines
-        print(" ".join([
+        logger.info(" ".join([
             f"Decode Engines: {len(self.engine_matcher[EngineType.PREFILL])},",
             f"Prefill Engines: {len(self.engine_matcher[EngineType.DECODE])},"
         ]))
@@ -121,7 +124,7 @@ class MISTCoordinatorDisagg_DistServe(MISTCoordinator):
         #     engine_id = self.engine_matcher[engine_type][type_id]
         #     engine_loads[engine_id] = self.engines[engine_id].tokens_load(self.global_time)
         for engine_id in engine_list:
-            print(f"At time: {request.metrics.arrival_time}, engine: {engine_id} has load: {self.engines[engine_id].tokens_load(request.metrics.arrival_time)}")
+            logger.debug(f"At time: {request.metrics.arrival_time}, engine: {engine_id} has load: {self.engines[engine_id].tokens_load(request.metrics.arrival_time)}")
             engine_loads[engine_id] = self.engines[engine_id].tokens_load(request.metrics.arrival_time)
 
         ## If all the engines have the same load, just return in RR manner
@@ -132,7 +135,7 @@ class MISTCoordinatorDisagg_DistServe(MISTCoordinator):
         elif len(engine_loads) > 0:
             engine_to_select = min(engine_loads, key=engine_loads.get)
         
-        print(f"At time: {request.metrics.arrival_time}, {engine_to_select} is selected")
+        logger.debug(f"At time: {request.metrics.arrival_time}, {engine_to_select} is selected")
         return engine_to_select
     
     # def _get_least_loaded_engine_prefill(self, engine_type:EngineType):
@@ -159,7 +162,7 @@ class MISTCoordinatorDisagg_DistServe(MISTCoordinator):
             #TODO: Use RoundRobin in base class, may need to do the engine movement like JSQ later.
             return super()._determine_dst_engine(EngineType.PREFILL, request)
         elif self.cluster_schedule == CoordRouterType.JOIN_SHORTEST_QUEUE:
-            print(f"request: {request.request_id} find engines: {self.engine_matcher[EngineType.PREFILL]}")
+            logger.debug(f"request: {request.request_id} find engines: {self.engine_matcher[EngineType.PREFILL]}")
             engine_to_select = self._get_least_loaded_engine(self.engine_matcher[EngineType.PREFILL], request)
             request.engine_assigned_stage[RequestStage.DECODE] = self._determine_decode_engine(request, engine_to_select)
             return engine_to_select
@@ -282,7 +285,7 @@ class MISTCoordinatorDisagg_DistServe(MISTCoordinator):
         num_prefill_reps = math.ceil(self.num_prefill_engines // num_prefills)
         num_decode_reps = math.ceil(self.num_decode_engines // num_decodes)
         assert num_decode_reps == num_decode_reps, f"The number of prefill-decode replications should match"
-        print(f"number of reps: {num_prefill_reps}")
+        logger.debug(f"number of reps: {num_prefill_reps}")
         for i in range(num_prefill_reps):
             strt_p = i*num_prefills
             end_p = min(strt_p + num_prefills, self.num_prefill_engines)
@@ -308,7 +311,7 @@ class MISTCoordinatorDisagg_DistServe(MISTCoordinator):
             for engine_id in p:
                 self.prefill_to_decode_matcher[engine_id] = d
 
-        print(self.prefill_to_decode_matcher)     
+        logger.debug(self.prefill_to_decode_matcher)     
         
 
             

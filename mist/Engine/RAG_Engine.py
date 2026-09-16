@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, ClassVar, Dict, Iterable, List, Optional
 from mist.Platforms.platforms import PlatformConfig, PlatformType
 from GenZ import get_configs
 import logging
-logger = logging.getLogger('mist')
+logger = logging.getLogger(__name__)
 import heapq
 import time
 import math

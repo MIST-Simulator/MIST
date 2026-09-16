@@ -7,6 +7,9 @@ from dataclasses import dataclass, field
 # from .base_stage import Stage
 from GenZ import ModelConfig, get_configs
 import math
+import logging
+
+logger = logging.getLogger(__name__)
 
 class RequestStatus(enum.Enum):
     """Status of a sequence."""
@@ -308,7 +311,7 @@ class Request:
             else:
                 return self.input_len
         else:
-            print(f"When in {self.current_stage} don't schedule the request.")
+            logger.warning(f"When in {self.current_stage} don't schedule the request.")
             return 0
 
     def current_scheduled(self, tokens_scheduled: int) -> None:

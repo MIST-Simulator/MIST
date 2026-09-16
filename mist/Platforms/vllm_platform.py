@@ -9,6 +9,9 @@ import numpy as np
 
 from mist.Request import Request
 from .platforms import PlatformConfig, PlatformType
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class vLLMPlatformConfig(PlatformConfig):
@@ -135,17 +138,17 @@ class vLLMPlatformConfig(PlatformConfig):
                     csv_name = f"{model_str.split('/')[-1].replace('_', '-')}_NVIDIA_{device}_{tensor_parallel_size}.csv"
                     vllm_df_path = os.path.join(base_dir, csv_name)
             if vllm_df_path is None or not os.path.exists(vllm_df_path):
-                print(f"vLLM data file not found at {vllm_df_path}")
-                print(f"Following data exists:")
+                logger.warning(f"vLLM data file not found at {vllm_df_path}")
+                logger.warning(f"Following data exists:")
                 if os.path.exists(base_dir):
                     for files in os.listdir(base_dir):
-                        print(files)
-                print("Falling back to PlatformConfig.")
+                        logger.warning(files)
+                logger.warning("Falling back to PlatformConfig.")
                 self.use_vllm = False
         else:
             if vllm_df_path is None or not os.path.exists(vllm_df_path):
-                print(f"vLLM data file not found at {vllm_df_path}")
-                print("Falling back to PlatformConfig.")
+                logger.warning(f"vLLM data file not found at {vllm_df_path}")
+                logger.warning("Falling back to PlatformConfig.")
                 self.use_vllm = False
 
         super().__init__(
@@ -210,7 +213,7 @@ class vLLMPlatformConfig(PlatformConfig):
                 ],
                 self.chunked_df["Time (ms)"],
             )
-            print(
+            logger.info(
                 "vLLM PlatformConfig: Trained RandomForestRegressor models for prefill, decode, and chunked time prediction."
             )
 

@@ -14,7 +14,6 @@ class TraceDistributions(RequestDistributions):
                 3. Output tokens
         '''
         self.request_queue = []
-        print(**kwargs)
         super().__init__(trace_file=trace_file, n=n, **kwargs) # Call the parent class constructor
         self.generate_distribution(n)
 
@@ -52,7 +51,7 @@ class TraceIngestion(RequestDistributions):
         self.ingestion_trace_file = ingestion_trace_file
         self.request_queue = []
         super().__init__(**kwargs) # Call the parent class constructor
-        self.convert_to_MIST_format(**kwargs)
+        self.convert_to_MIST_format()
 
     def convert_to_MIST_format(self):
         trace_df = read_csv(self.ingestion_trace_file)

@@ -12,6 +12,9 @@ import numpy as np
 import enum
 
 from mist.Coordinator.global_router import CoordRouterType, LoadTypes, req_is_heavy
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class EventType(enum.Enum):
@@ -173,7 +176,7 @@ class MISTCoordinator:
                 # if self.request_queue:
                 #     self.global_time = min(self.global_time, self.request_queue[0][0])
                 if self.global_time >= next_print_time:
-                    print(f"Global Time {self.global_time}")
+                    logger.debug(f"Global Time {self.global_time}")
                     next_print_time = (self.global_time // 1000 + 1) * 1000
                 eng_push_event = (engine_step_end_time, engine_id)
                 if self.engines[engine_id].engine_idle() == False:

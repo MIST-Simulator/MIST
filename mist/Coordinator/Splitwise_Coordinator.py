@@ -10,6 +10,9 @@ from mist.Global_Network import get_network_bw_between_engines, get_network_spec
 import pandas as pd
 from collections import deque
 import numpy as np
+import logging
+
+logger = logging.getLogger(__name__)
 
 def engine_to_stage_mapping(type: EngineType):
     if type == EngineType.RAG:
@@ -93,7 +96,7 @@ class MISTCoordinatorDisagg(MISTCoordinator):
         # Need a mixed pool for the purpose of easy management
         self.engine_matcher[EngineType.MIXED] = []
 
-        print(f"model used by platform: {self.platform.model}")
+        logger.debug(f"model used by platform: {self.platform.model}")
 
         pre_engine_decode_only_cache = {}
         pre_engine_mixed_batch_cache = {}
@@ -148,7 +151,7 @@ class MISTCoordinatorDisagg(MISTCoordinator):
         #     ), [EngineType.HOST])
 
         # Print out layout and assignment of engines
-        print(" ".join([
+        logger.info(" ".join([
             f"Prefill Engines: {self.engine_matcher[EngineType.PREFILL]},",
             f"Decode Engines: {self.engine_matcher[EngineType.DECODE]},",
             f"Mixed Engines: {self.engine_matcher[EngineType.MIXED]}"

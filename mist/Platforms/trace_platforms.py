@@ -6,6 +6,9 @@ from mist.Platforms.performance_model import PerformanceModel, SplitwisePerforma
 from mist.Platforms.platforms import PlatformConfig, PlatformType
 
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class TracePlatformConfig(PlatformConfig):
@@ -31,7 +34,7 @@ class TracePlatformConfig(PlatformConfig):
         
         current_dir = os.path.dirname(os.path.abspath(__file__))
         data_path = os.path.join(current_dir, data_path)
-        print(f"current working directory: {data_path}") 
+        logger.debug(f"current working directory: {data_path}") 
         # Initialize the performance  
         self.perf_model = SplitwisePerformanceModel(data_path)
 

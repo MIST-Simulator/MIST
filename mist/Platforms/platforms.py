@@ -13,6 +13,9 @@ import pandas as pd
 import ast
 from sklearn.ensemble import RandomForestRegressor
 import numpy as np
+import logging
+
+logger = logging.getLogger(__name__)
 
 class PlatformType(enum.Enum):
     PREFILL_MACHINE = enum.auto()
@@ -283,7 +286,7 @@ class PlatformConfig:
                 raise ValueError(f"Error in chunked_moddeling: prefill=[], decode={decode_kv_caches}")
 
             latency = chunked_output['Latency']
-            print(f"[Platform] Computed decode-only: n_dec={n_dec}, sum_kv={sum_kv}, latency={latency:.6f}")
+            logger.debug("Computed decode-only: n_dec=%s, sum_kv=%s, latency=%.6f", n_dec, sum_kv, latency)
             self._decode_only_cache.setdefault(n_dec, {})[sum_kv] = (latency, used_energy)
             self._persist_cache_entry('decode_only_cache', n_dec, sum_kv, latency, used_energy)
             return latency, used_energy
@@ -330,7 +333,7 @@ class PlatformConfig:
                 raise ValueError(f"Error in chunked_moddeling: prefill={prefill_kv_caches}, decode={decode_kv_caches}")
 
             latency = chunked_output['Latency']
-            print(f"[Platform] Computed mixed batch: chunk_size={chunk_size}, total_kv={total_kv}, latency={latency:.6f}")
+            logger.debug("Computed mixed batch: chunk_size=%s, total_kv=%s, latency=%.6f", chunk_size, total_kv, latency)
             self._mixed_batch_cache.setdefault(chunk_size, {})[total_kv] = (latency, used_energy)
             self._persist_cache_entry('mixed_batch_cache', chunk_size, total_kv, latency, used_energy)
             return latency, used_energy

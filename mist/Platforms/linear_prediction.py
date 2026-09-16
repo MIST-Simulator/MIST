@@ -2,6 +2,9 @@ from sklearn.linear_model import LinearRegression
 from sklearn.neural_network import MLPRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, r2_score
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Prepare the input (X) and output (y) data
 
@@ -21,12 +24,12 @@ def train_linear_model(X, y):
     mse = mean_squared_error(y_test, y_pred)
     r2 = r2_score(y_test, y_pred)
 
-    print(f"Mean Squared Error: {mse}")
-    print(f"R-squared: {r2}")
+    logger.info(f"Mean Squared Error: {mse}")
+    logger.info(f"R-squared: {r2}")
 
     # Display the coefficients
-    print(f"Coefficients: {ml_model.coef_}")
-    print(f"Intercept: {ml_model.intercept_}")
+    logger.info(f"Coefficients: {ml_model.coef_}")
+    logger.info(f"Intercept: {ml_model.intercept_}")
     return ml_model
 
 def train_neural_network(X, y):
@@ -44,10 +47,10 @@ def train_neural_network(X, y):
     mse = mean_squared_error(y_test, y_pred)
     r2 = r2_score(y_test, y_pred)
 
-    print(f"Mean Squared Error: {mse}")
-    print(f"R-squared: {r2}")
+    logger.info(f"Mean Squared Error: {mse}")
+    logger.info(f"R-squared: {r2}")
 
     # Display the coefficients
-    print(f"Coefficients: {ml_model.coef_}")
-    print(f"Intercept: {ml_model.intercept_}")
+    logger.info(f"Coefficients: {ml_model.coef_}")
+    logger.info(f"Intercept: {ml_model.intercept_}")
     return ml_model 

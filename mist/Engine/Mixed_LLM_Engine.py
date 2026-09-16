@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, ClassVar, Dict, Iterable, List, Optional
 from mist.Platforms.platforms import PlatformConfig, PlatformType
 from mist.Request import Request, DataMetrics, RequestMetrics, RequestStage
 import logging
-logger = logging.getLogger('mist')
+logger = logging.getLogger(__name__)
 import heapq
 import time
 from mist.Coordinator.global_router import LoadTypes
@@ -31,7 +31,7 @@ class LLMEngine(MISTEngine):
         max_kv_tokens = platform.get_max_kv_tokens()
         scheduler_config.max_batched_kv_size = max_kv_tokens
         if scheduler_config.max_num_batched_tokens > max_kv_tokens:
-            print(f"Warning: max_num_batched_tokens {scheduler_config.max_num_batched_tokens} is greater than max_kv_tokens {max_kv_tokens}. Setting max_num_batched_tokens to max_kv_tokens.")
+            logger.warning(f"Warning: max_num_batched_tokens {scheduler_config.max_num_batched_tokens} is greater than max_kv_tokens {max_kv_tokens}. Setting max_num_batched_tokens to max_kv_tokens.")
             scheduler_config.max_num_batched_tokens = max_kv_tokens
 
             
@@ -157,7 +157,7 @@ class LLMEngine(MISTEngine):
                 if req.request_id not in dup_reqs:
                     self._update_token_load_storage(req)
                 else:
-                    print(f"unfinished dup reqs: {req.request_id}")
+                    logger.warning(f"unfinished dup reqs: {req.request_id}")
 
 
         start_time = time.time()

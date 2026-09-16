@@ -4,6 +4,9 @@ from typing import Optional
 import enum
 import math
 import pandas as pd
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Inspired from Calculon.
 
@@ -99,7 +102,7 @@ def get_network_bw_between_engines(global_size, network_spec: GPUNetworkSpec, in
         # This means all the engines should be connected with inter rack
         lowest_connection = NetworkConnectionType.POD
 
-    print(f"lowest-level connection: {lowest_connection}")
+    logger.debug(f"lowest-level connection: {lowest_connection}")
 
     # Assume sending i to j is the same as sending j to i
     for i in range(global_size):
@@ -141,7 +144,7 @@ def get_network_bw_between_engines(global_size, network_spec: GPUNetworkSpec, in
         writer.writeheader()
         writer.writerows(data)
 
-    print(f"CSV file '{csv_filename}' created successfully.")
+    logger.info(f"CSV file '{csv_filename}' created successfully.")
 
 
 if __name__ == "__main__":
