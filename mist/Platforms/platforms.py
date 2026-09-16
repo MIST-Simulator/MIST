@@ -105,7 +105,8 @@ class PlatformConfig:
         else:
             raise ValueError("Model should be a string or ModelConfig instance.")
         record_filename = f"{self.get_log_prefix()}record_{str(model_name).replace('/', '_')}_{self.device}_TP{self.tensor_parallel_size}_PP{self.pipeline_parallel_size}_{self.bits}.db"
-        record_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "Platform_traces_logs"))
+        # Persistent latency cache; kept out of the package so read-only installs work.
+        record_dir = os.environ.get("MIST_CACHE_DIR") or os.path.join(os.path.expanduser("~"), ".cache", "mist")
         os.makedirs(record_dir, exist_ok=True)
         self.record_path = os.path.join(record_dir, record_filename)
 

@@ -1,4 +1,9 @@
+import os
+import tempfile
 from copy import deepcopy
+
+# Fresh latency cache per test session so results never come from a stale disk cache.
+os.environ["MIST_CACHE_DIR"] = tempfile.mkdtemp(prefix="mist-test-cache-")
 
 import pytest
 
