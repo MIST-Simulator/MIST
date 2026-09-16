@@ -9,7 +9,7 @@ class TraceDistributions(RequestDistributions):
         ''' Reads a csv trace file and generates the request queue
         Args:
             trace_file (str): Path to the trace file, it has 3 columns:
-                1. Arrival time
+                1. TIMESTAMP (datetime; converted to ms since the first request)
                 2. Input tokens
                 3. Output tokens
         '''
@@ -20,10 +20,7 @@ class TraceDistributions(RequestDistributions):
     def generate_distribution(self, n:int = None) -> None:
         ''' Reads the trace file and generates the request queue
         '''
-        trace_df = self.trace_df
-        trace_df['arrival_time'] = pd.to_datetime(trace_df['TIMESTAMP'])
-        min_time = trace_df['arrival_time'].min()
-        trace_df['arrival_time'] = (trace_df['arrival_time'] - min_time).dt.total_seconds()
+        trace_df = self.trace_df  # arrival_time (ms since first request) set by RequestDistributions
         num_requests = len(trace_df)
         if n is not None:
             num_requests = min(num_requests, n)
@@ -44,7 +41,7 @@ class TraceIngestion(RequestDistributions):
         ''' Reads a csv trace file and generates the request queue
         Args:
             trace_file (str): Path to the trace file, it has 3 columns:
-                1. Arrival time
+                1. arrival_timestamp (seconds; converted to ms)
                 2. Input tokens
                 3. Output tokens
         '''

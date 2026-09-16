@@ -33,7 +33,8 @@ class RequestDistributions:
             if 'TIMESTAMP' in trace_df.columns:
                 trace_df['arrival_time'] = pd.to_datetime(trace_df['TIMESTAMP'])
                 min_time = trace_df['arrival_time'].min()
-                trace_df['arrival_time'] = (trace_df['arrival_time'] - min_time).dt.total_seconds()
+                # Arrival times in milliseconds, like every other time in MIST.
+                trace_df['arrival_time'] = (trace_df['arrival_time'] - min_time).dt.total_seconds() * 1000
             self.max_data_len = len(trace_df)
         else:
             trace_df = None
