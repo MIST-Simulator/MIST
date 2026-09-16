@@ -32,19 +32,13 @@ class MISTCoordinatorDisagg(MISTCoordinator):
 
     def __init__(
         self,
-        request_queue_distr = UniformDistribution(
-                rps=30,
-                sim_time=1000,
-                input_vars=LengthVariables(4096,3),
-                output_vars=LengthVariables(4096,3),
-        ).request_queue,
+        request_queue_distr = None,
         model = 'meta-llama/meta-llama-3.1-70b',
         num_llm_engines=3,
         num_prefill_engines=1,
         num_decode_engines=1,
         num_mixed_engines=0,
-        platform = PlatformConfig(device='H100_GPU', tensor_parallel_size=4,
-                                model='meta-llama/meta-llama-3.1-70b', pipeline_parallel_size=1),
+        platform = None,
         decode_platform = None,
         cluster_schedule=CoordRouterType.JOIN_SHORTEST_QUEUE,
         convert_to_mixed_engine=True,
@@ -53,6 +47,17 @@ class MISTCoordinatorDisagg(MISTCoordinator):
         max_sim_time: Optional[float] = np.inf,
         max_pending_prompt_tokens: int = 8192,
         ) -> None:
+
+        # Defaults are built per instance: a request queue or platform in the signature
+        # would be created at import time and shared (and mutated) by every coordinator.
+        if request_queue_distr is None:
+            request_queue_distr = UniformDistribution(
+                rps=30, sim_time=1000,
+                input_vars=LengthVariables(4096,3), output_vars=LengthVariables(4096,3),
+            ).request_queue
+        if platform is None:
+            platform = PlatformConfig(device='H100_GPU', tensor_parallel_size=4,
+                                      model='meta-llama/meta-llama-3.1-70b', pipeline_parallel_size=1)
 
         assert num_prefill_engines != 0 and num_decode_engines != 0, "Must have initial prefill and decode engines"
         assert num_decode_engines + num_prefill_engines + num_mixed_engines == num_llm_engines, "Incorrect engines assignment"

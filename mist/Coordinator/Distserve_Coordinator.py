@@ -32,21 +32,26 @@ class MISTCoordinatorDisagg_DistServe(MISTCoordinator):
 
     def __init__(
         self,
-        request_queue_distr = UniformDistribution(
-                rps=30,
-                sim_time=1000,
-                input_vars=LengthVariables(4096,3),
-                output_vars=LengthVariables(4096,3),
-        ).request_queue,
+        request_queue_distr = None,
         model = 'meta-llama/meta-llama-3.1-70b',
         num_llm_engines=2,
         num_prefill_engines=1,
         num_decode_engines=1,
-        platform = PlatformConfig(device='H100_GPU', tensor_parallel_size=4,
-                                model='meta-llama/meta-llama-3.1-70b', pipeline_parallel_size=1),
+        platform = None,
         cluster_schedule=CoordRouterType.JOIN_SHORTEST_QUEUE
         ) -> None:
         
+        # Defaults are built per instance: a request queue or platform in the signature
+        # would be created at import time and shared (and mutated) by every coordinator.
+        if request_queue_distr is None:
+            request_queue_distr = UniformDistribution(
+                rps=30, sim_time=1000,
+                input_vars=LengthVariables(4096,3), output_vars=LengthVariables(4096,3),
+            ).request_queue
+        if platform is None:
+            platform = PlatformConfig(device='H100_GPU', tensor_parallel_size=4,
+                                      model='meta-llama/meta-llama-3.1-70b', pipeline_parallel_size=1)
+
         assert num_decode_engines + num_prefill_engines == num_llm_engines, "Incorrect engines assignment"
         self.num_prefill_engines=num_prefill_engines
         self.num_decode_engines=num_decode_engines
