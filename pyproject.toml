@@ -18,7 +18,8 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "genz_llm",
+    # PyPI genz_llm (<=0.0.16) lacks GenZ.power; switch to a version pin once released.
+    "genz_llm @ git+https://github.com/abhibambhaniya/GenZ-LLM-Analyzer.git",
     "numpy",
     "pandas",
     "scipy",
@@ -38,3 +39,6 @@ include = ["mist*"]
 
 [tool.setuptools.package-data]
 mist = ["Platforms/data/*.csv", "Platforms/vllm_runtime_data/*.csv", "Input_requests/Example Traces/*.csv", "Input_requests/Example_Traces/*.csv"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

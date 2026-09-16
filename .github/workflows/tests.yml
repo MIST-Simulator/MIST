@@ -1,0 +1,32 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      # Only the ~1 MB of example traces; the 200+ MB vLLM runtime tables are not
+      # needed by the tests and would burn through the LFS bandwidth quota.
+      - name: Fetch example traces from LFS
+        run: git lfs pull --include "mist/Input_requests/**"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install
+        run: pip install -e ".[test]"
+      - name: Test
+        run: pytest -q
+      - name: Examples
+        run: |
+          python examples/kv_cache_retrieval.py
+          python examples/disaggregated_prefill_decode.py
