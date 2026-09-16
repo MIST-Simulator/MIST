@@ -146,7 +146,7 @@ class Request:
         self.beam_size = beam_size
         self.output_len = output_len
 
-        self.stages = stages # List of stages
+        self.stages = list(stages) # List of stages
         self.metrics = RequestMetrics(arrival_time=arrival_time)
         self.current_stage = self.stages[0]
         self.current_stage_index = 0

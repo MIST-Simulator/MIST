@@ -21,8 +21,8 @@ class LLMEngine(MISTEngine):
         max_pending_prompt_tokens: int = 8192,
         step_size: int = 256,    # Number of tokens to process without recalculating time
         engine_kv_step_size: int = 32000,  # Number of KV tokens to process without recalculating time
-        decode_only_cache: Dict[int, Dict[int, tuple]] = {},
-        mixed_batch_cache: Dict[int, Dict[int, tuple]] = {},
+        decode_only_cache: Optional[Dict[int, Dict[int, tuple]]] = None,
+        mixed_batch_cache: Optional[Dict[int, Dict[int, tuple]]] = None,
         ) -> None:
         
         
@@ -68,9 +68,10 @@ class LLMEngine(MISTEngine):
 
         ## For faster execution — nested dictionary-based lookup caches
         # _decode_only_cache[num_decodes][sum_decode_kv] = (runtime, energy)
-        self._decode_only_cache: Dict[int, Dict[int, tuple]] = decode_only_cache
+        # Pass a dict explicitly to share a cache between engines on the same platform.
+        self._decode_only_cache: Dict[int, Dict[int, tuple]] = {} if decode_only_cache is None else decode_only_cache
         # _mixed_batch_cache[chunk_size][total_kv] = (runtime, energy)
-        self._mixed_batch_cache: Dict[int, Dict[int, tuple]] = mixed_batch_cache
+        self._mixed_batch_cache: Dict[int, Dict[int, tuple]] = {} if mixed_batch_cache is None else mixed_batch_cache
         self.engine_step_size = step_size
         self.engine_kv_step_size = engine_kv_step_size
     @staticmethod

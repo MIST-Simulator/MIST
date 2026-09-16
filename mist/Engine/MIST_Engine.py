@@ -120,7 +120,7 @@ class MISTEngine:
         # Create the scheduler.
         self.platform = platform
         self.engine_id = engine_id
-        self.engine_types = engine_types
+        self.engine_types = list(engine_types)
         self.logger = None
         self.batched_engine = False     # If the engine is batched or not
 

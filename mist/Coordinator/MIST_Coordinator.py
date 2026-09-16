@@ -25,7 +25,7 @@ class EventType(enum.Enum):
 class MISTCoordinator:
     def __init__(
             self,
-            starting_request_queue: List[Request] = [],
+            starting_request_queue: Optional[List[Request]] = None,
             logging_file: Optional[str] = 'trace.json',
             max_sim_time: Optional[float] = np.inf,
             network_file: Optional[str | pd.DataFrame] = None,
@@ -44,8 +44,8 @@ class MISTCoordinator:
         self.network_file = network_file
 
         ## Request related parameters
-        self.starting_request_queue = starting_request_queue
-        self.request_accepted = len(starting_request_queue)
+        self.starting_request_queue = [] if starting_request_queue is None else starting_request_queue
+        self.request_accepted = len(self.starting_request_queue)
         self.event_queue = []
         self.request_serviced = 0
         self.completed_requests = []
