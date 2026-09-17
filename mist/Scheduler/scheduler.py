@@ -300,11 +300,24 @@ class Scheduler:
                 continue
 
             if num_new_tokens > 0:
+                new_kv = self._kv_length_if_scheduled(req)
+                if new_kv > self.scheduler_config.max_batched_kv_size:
+                    # Can never fit on this engine, even alone: drop it instead of
+                    # building a batch the cost model cannot place in memory.
+                    warnings.warn(
+                        f"For Req ID: {req.request_id}, KV cache ({new_kv} tokens) exceeds the engine's "
+                        f"KV capacity of {self.scheduler_config.max_batched_kv_size} tokens", UserWarning)
+                    req.status = RequestStatus.FINISHED_IGNORED
+                    self.end_request(req)
+                    queue.popleft()
+                    continue
+                if not budget.can_schedule(num_new_tokens=num_new_tokens, num_new_seqs=1, new_kv_cache=new_kv):
+                    break  # FCFS: wait for the next step rather than overshoot the KV budget.
                 request_queue.append(req)
                 req.current_scheduled(num_new_tokens)
                 queue.popleft()
                 budget.add_num_batched_tokens(req.request_id, num_new_tokens)
-                budget.add_kv_cache(req.request_id, req.get_current_kv_length())
+                budget.add_kv_cache(req.request_id, new_kv)
                 budget.add_num_seqs(req.request_id, 1)
                 # print("Scheduling: ", req.request_id, "Num Tokens: ", num_new_tokens, "Num Seqs: ", 1, "KV Cache: ", req.get_current_kv_length(), "Total Tokens: ", budget.num_batched_tokens, "Total Seqs: ", budget.num_curr_seqs, "Total KV Cache: ", budget.num_batched_kv_cache)
             else:   ## TODO:This doesn't accommodate the next request even if it can be scheduled.
@@ -438,6 +451,14 @@ class Scheduler:
 
         return finished_req
 
+
+    @staticmethod
+    def _kv_length_if_scheduled(req: Request) -> int:
+        """KV tokens the request holds once scheduled this step
+        (what req.get_current_kv_length() returns after req.current_scheduled())."""
+        if req.current_stage == RequestStage.PREFILL:
+            return req.past_context + req.input_len - req.remaining_prefill_tokens
+        return req.get_current_kv_length()
 
     def _get_num_new_tokens(self, req: Request,
                             budget: SchedulingBudget,

@@ -27,6 +27,13 @@ in the cases below.
 - **`total_token_throughput` excludes reused KV.** The old code subtracted
   `past_context` from the prompt-token count, which made the value negative for
   KV-retrieval workloads. `output_throughput` is unchanged.
+- **The scheduler enforces the KV-cache budget.** It used to check the budget
+  only before admitting each request, so batches overshot GPU memory, and a
+  request larger than the engine's whole KV capacity was still scheduled
+  (crashing GenZ with "params would not fit on chip"). Requests are now
+  admitted only if the batch still fits, and requests that can never fit are
+  dropped as `FINISHED_IGNORED` with a warning. Runs at high load or with long
+  contexts can batch less aggressively than before.
 - **The latency cache moved** from the package directory to `~/.cache/mist`
   (`MIST_CACHE_DIR`), and its filenames now include the precision. Old caches
   are not reused.

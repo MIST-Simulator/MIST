@@ -1,5 +1,5 @@
 from mist import BatchingMethod, SchedulerConfig
-from mist.Request import Request
+from mist.Request import Request, RequestStage, RequestStatus
 from mist.Scheduler.scheduler import Scheduler
 from conftest import make_queue, run_sim
 
@@ -40,3 +40,44 @@ def test_budgets_hold_for_every_step_of_a_simulation():
     assert states, "scheduler never ran"
     assert all(s.prefills_sched + s.decodes_sched <= 4 for s in states)
     assert coord.request_serviced == coord.request_accepted
+
+
+def _kv_config(kv_budget, **kw):
+    config = SchedulerConfig(batching_method=BatchingMethod.CHUNKED, chunk_size=512, **kw)
+    config.max_batched_kv_size = kv_budget
+    return config
+
+
+def _decodes(sched, kv_lens):
+    reqs = []
+    for i, kv in enumerate(kv_lens):
+        r = Request(request_id=i, input_len=kv, output_len=8)
+        r.current_scheduled(kv)  # prefill done
+        r.current_stage = RequestStage.DECODE
+        sched.add_request(r)
+        reqs.append(r)
+    return reqs
+
+
+def test_kv_budget_is_not_overshot():
+    sched = Scheduler(_kv_config(10_000))
+    reqs = _decodes(sched, [9_000, 3_000, 500])
+    _, decodes = sched.schedule(current_time=0)
+    assert decodes == reqs[:1]  # 9k + 3k would exceed 10k; FCFS stops there
+    assert list(sched.running) == reqs[1:]
+
+
+def test_request_larger_than_kv_capacity_is_ignored():
+    sched = Scheduler(_kv_config(10_000))
+    reqs = _decodes(sched, [60_000, 2_000])
+    _, decodes = sched.schedule(current_time=0)
+    assert decodes == [reqs[1]]
+    assert reqs[0].status == RequestStatus.FINISHED_IGNORED
+    assert list(sched.running) == []  # the oversized request is dropped, not requeued
+
+
+def test_kv_budget_holds_through_a_simulation():
+    coord = run_sim(make_queue(rps=20), device="A100_40GB_GPU")
+    engine = coord.engines[0]
+    assert coord.request_serviced == coord.request_accepted
+    assert engine.scheduler.scheduler_config.max_batched_kv_size < 1_000_000  # derived from the platform

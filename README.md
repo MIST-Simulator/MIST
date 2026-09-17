@@ -144,8 +144,8 @@ which installs this package.
 - **Over-long prompts with non-chunked batching.** A prompt longer than
   `max_num_batched_tokens` is never scheduled and blocks the head of the
   waiting queue. Use `CHUNKED` batching or raise the budget.
-- The scheduler has no preemption, and the KV budget is only checked before
-  each admission, so a batch can overshoot it by one request.
+- The scheduler has no preemption. Requests whose KV cache can never fit on
+  their engine are dropped (`FINISHED_IGNORED`) and are not counted as served.
 - `vLLMPlatformConfig` falls back to the analytical model outside the profiled
   (model, GPU, TP) combinations and warns when it does.
 - The RAG engine and the DistServe coordinator see far less use than the rest
